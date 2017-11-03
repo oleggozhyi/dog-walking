@@ -1,4 +1,4 @@
-﻿namespace DogWalking.Domain
+﻿namespace DogWalking.Control
 
 [<AutoOpen>]
 module Railway =
@@ -9,21 +9,16 @@ module Railway =
         | Ok x -> f x
         | Error e -> Error e
     let (>>=) = bind
+    let (>=>) f1 f2 x = f1 x >>= f2
 
     type ResultBuilder() =
         member this.Bind(x, f) = x >>= f
         member this.Return(x) = Ok x
+        member this.ReturnFrom(x) = x
     let result = new ResultBuilder()
 
     let map f xRes = xRes >>= (f >> Ok)
     let (<!>) = map
-
-    let traverseResultM f list =
-        let folder head tail = result {
-            let! h = f head
-            let! t = tail
-            return h::t
-         } in List.foldBack folder list (Ok []) 
 
     let apply fRes xRes : Result<'a, ErrorMessageList> = 
         match fRes, xRes with
@@ -32,5 +27,6 @@ module Railway =
         | Ok _, Error e -> Error e
         | Error e1, Error e2 -> e1 @ e2 |> Error
     let (<*>) = apply
+
 
 
