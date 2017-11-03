@@ -60,15 +60,13 @@ module DomainTypes =
     
     [<Struct>]
     type ThreeDogsOrLess = ThreeDogsOrLess of Dog list
-        with static member create xs = 
-                if List.length xs > 3 then failwith "Length should be < 3"
-                else ThreeDogsOrLess xs
+        with static member splitBy3 dogs = 
+              dogs |> List.splitInto 3 |> List.map ThreeDogsOrLess   
 
     [<Struct>]
     type FiveDogsOrLess = FiveDogsOrLess of Dog list
-        with static member create xs = 
-                if List.length xs > 3 then failwith "Length should be < 5"
-                else FiveDogsOrLess xs
+        with static member splitBy5 dogs = 
+              dogs |> List.splitInto 5 |> List.map FiveDogsOrLess
 
     type DogPack = 
         | AggressiveSmallDog of Dog
@@ -80,4 +78,22 @@ module DomainTypes =
     let getSmallAggressiveDogs = List.filter (fun d -> d.IsSmall && d.IsAggressive)
     let getBigDogs = List.filter (fun d -> not d.IsSmall && not d.IsAggressive)
     let getBigAggressiveDogs = List.filter (fun d -> not d.IsSmall && d.IsAggressive)
+    
+    let createPacks dogs = [
+        yield! dogs |> getSmallAggressiveDogs  |> List.map AggressiveSmallDog
+        yield! dogs |> getBigAggressiveDogs |> List.map AggressiveBigDog
+        yield! dogs |> getSmallDogs |>  FiveDogsOrLess.splitBy5 |> List.map SmallDogsPack
+        yield! dogs |> getBigDogs |>  ThreeDogsOrLess.splitBy3 |> List.map BigDogsPack
+    ]
+
+    let getAllDogs customers = 
+        customers |> List.map (fun c -> c.Dogs) |> List.concat
+    
+
+       
+    let scheduleNext allPacks lastDogPack = 
+        let allPacksDoubled = allPacks @ allPacks // protection against odd numbers of packs
+        allPacksDoubled 
+        |> List.skipWhile (fun pack -> pack <> lastDogPack) 
+        |> List.take 2 
         
