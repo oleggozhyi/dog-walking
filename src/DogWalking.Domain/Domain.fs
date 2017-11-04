@@ -16,24 +16,24 @@ module PrimitiveWappers =
 
     module Email =
         let create = function
-                | null | "" -> Error ["Email can't be empty"]
+                | null | "" -> Failure.validation ["Email can't be empty"]
                 | s when Regex.IsMatch(s, @"^\S+@\S+\.\S+$") ->  Email s |> Ok
-                | s -> Error ["Email format is invalid: " + s]
+                | s -> Failure.validation ["Email format is invalid: " + s]
         let  valueOf email = let (Email s) = email in s
 
     module Phone =
         let valueOf phone = let (Phone s) = phone in s
         let create = function
-            | null | "" -> Error ["Phone can't be empty"]
+            | null | "" -> Failure.validation ["Phone can't be empty"]
             | s when  Regex.IsMatch(s, @"^[\d\(\)+\s-]+$") ->  Phone s |> Ok
-            | s -> Error ["Phone format is invalid: " + s]
+            | s -> Failure.validation ["Phone format is invalid: " + s]
 
     module Name =
         let valueOf name = let (Name s) = name in s
         let create = function
-                | null | "" -> Error ["Name can't be empty"]
-                | s when String.length s < 2 -> Error ["Name is too short"]
-                | s when String.length s >= 30 -> Error ["Name should be less than 30: " + s]
+                | null | "" -> Failure.validation ["Name can't be empty"]
+                | s when String.length s < 2 -> Failure.validation ["Name is too short"]
+                | s when String.length s >= 30 -> Failure.validation ["Name should be less than 30: " + s]
                 | s -> Name s |> Ok
 
 [<AutoOpen>]

@@ -56,6 +56,7 @@
     <Compile Include="Dto.fs" />
     <Compile Include="Domain.fs" />
     <Compile Include="Dal.fs" />
+    <Compile Include="Http.fs" />
     <Compile Include="AppServices.fs" />
     <Compile Include="Api.fs" />
     <Compile Include="Startup.fs" />
@@ -70,6 +71,9 @@
       <HintPath>..\packages\Microsoft.Win32.Primitives.4.3.0\lib\net46\Microsoft.Win32.Primitives.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="Suave">
       <HintPath>..\packages\Suave.2.2.1\lib\net40\Suave.dll</HintPath>
     </Reference>
