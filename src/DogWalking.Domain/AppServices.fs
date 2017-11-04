@@ -12,7 +12,9 @@ module CustomersService =
     let removeCustomer = Id.parse >>=> Dal.removeCustomer
     let getCustomer idStr = result {
             let! id =  idStr|>Id.parse 
-            return Dal.getCustomer id
+            let! customerOpt = Dal.getCustomer id
+            let customerDto = customerOpt |> Option.map Customer.createDto 
+            return customerDto
         }
     let getCustomers() = result {
             let! customers = Dal.getCustomers()

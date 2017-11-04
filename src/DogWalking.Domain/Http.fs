@@ -12,35 +12,37 @@ open System
 open System.Text
 
 module HttpHelpers =
+    type ErrorMessage = { Message: string }
 
     let private defaultJsonSettings = new  JsonSerializerSettings (ContractResolver = new CamelCasePropertyNamesContractResolver())
 
     let toJson o = JsonConvert.SerializeObject(o, defaultJsonSettings) 
-
+        
+    let toJsonMessage s = { Message = s } |> toJson
     let fromJson<'a> json =
         try
             JsonConvert.DeserializeObject(json, typeof<'a>) :?> 'a |> Ok
         with 
             | :? Exception as ex -> Failure.validation [ex.ToString()]
 
-    let JSON_OK o = toJson o |> OK >=> Writers.setMimeType "application/json; charset=utf-8"
+    let JSON_OK o = toJson o |> OK
        
+    let handleFailure = function
+        | Failure e -> e |> INTERNAL_ERROR
+        | Validation es -> es |> toJson |> BAD_REQUEST
+
     let handleResult = function
         | Ok x -> x |> JSON_OK
-        | Error (Failure e) -> e |> INTERNAL_ERROR
-        | Error (Validation es) -> es |> toJson |> BAD_REQUEST
+        | Error e -> e |> handleFailure
 
     let handleEmptyResult = function
         | Ok () -> NO_CONTENT
-        | Error (Failure e) -> e |> INTERNAL_ERROR
-        | Error (Validation es) -> es |> toJson |> BAD_REQUEST
+        | Error e -> e |> handleFailure
+    
+    let handleResultWithOption = function
+        | Ok (Some x) ->  x |> JSON_OK
+        | Ok None ->  "resource with this id was not found" |> toJsonMessage |> NOT_FOUND
+        | Error e -> e |> handleFailure
 
     let readPayload<'a> (req : HttpRequest) =
         req.rawForm |> Encoding.UTF8.GetString |> fromJson<'a>
-
-    let readsPayloadReturns200 f = request (readPayload >>=> f >> handleResult)
-    let returns200 f = request (fun _ -> f() |> handleResult)
-    let returns204 f = request (fun _ -> f() |> handleEmptyResult)
-    let readsPayloadReturns204 f = request(readPayload >>=> f >> handleEmptyResult)
-    
-    

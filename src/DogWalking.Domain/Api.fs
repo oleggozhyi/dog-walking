@@ -2,19 +2,20 @@
 
 open Suave
 open Suave.Filters
-open Suave.Successful
 open Suave.Operators
 open DogWalking.AppServices
 open DogWalking.HttpHelpers
-open Boundary.InputDto
 
 module Api = 
     open Suave.RequestErrors
+    open DogWalking.Control
 
-    let app = choose [ POST   >=> path "/customers" >=>   (readsPayloadReturns204 CustomersService.addCustomer)
-                       GET    >=> path "/customers" >=>   (returns200 CustomersService.getCustomers) 
-                       GET    >=> pathScan "/customers/%s" (fun id -> returns200 (fun () -> CustomersService.getCustomer id))
-                       DELETE >=> pathScan "/customers/%s" (fun id -> returns204 (fun () -> CustomersService.removeCustomer id))
-
-                       NOT_FOUND "No such endpoint" ]
+    let app = 
+        choose 
+            [ POST   >=> path "/customers" >=> request (readPayload >>=> CustomersService.addCustomer >> handleEmptyResult)
+              GET    >=> path "/customers" >=> warbler (fun _ -> CustomersService.getCustomers() |> handleResult)
+              GET    >=> pathScan "/customers/%s"      (fun id -> CustomersService.getCustomer id |> handleResultWithOption)
+              DELETE >=> pathScan "/customers/%s"      (fun id -> CustomersService.removeCustomer id |> handleEmptyResult)
+              NOT_FOUND (toJsonMessage "No such endpoint") ]
+        >=> Writers.setMimeType "application/json; charset=utf-8"
 
