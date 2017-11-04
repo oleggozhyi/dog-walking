@@ -13,8 +13,8 @@ module Api =
 
     let app = choose [ POST   >=> path "/customers" >=>   (readsPayloadReturns204 CustomersService.addCustomer)
                        GET    >=> path "/customers" >=>   (returns200 CustomersService.getCustomers) 
-                       GET    >=> pathScan "customers/%s" (fun id -> returns200 (fun () -> CustomersService.getCustomer id))
-                       DELETE >=> pathScan "customers/%s" (fun id -> returns204 (fun () -> CustomersService.removeCustomer id))
+                       GET    >=> pathScan "/customers/%s" (fun id -> returns200 (fun () -> CustomersService.getCustomer id))
+                       DELETE >=> pathScan "/customers/%s" (fun id -> returns204 (fun () -> CustomersService.removeCustomer id))
 
                        NOT_FOUND "No such endpoint" ]
 

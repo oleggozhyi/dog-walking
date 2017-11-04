@@ -10,5 +10,13 @@ open DogWalking.Boundary
 module CustomersService =
     let addCustomer = Customer.createFromDto >>=> Dal.addCustomer
     let removeCustomer = Id.parse >>=> Dal.removeCustomer
-    let getCustomer = Id.parse >>=> Dal.getCustomer 
-    let getCustomers = Dal.getCustomers
+    let getCustomer idStr = result {
+            let! id =  idStr|>Id.parse 
+            return Dal.getCustomer id
+        }
+    let getCustomers() = result {
+            let! customers = Dal.getCustomers()
+            let dtos = customers |> Seq.map Customer.createDto
+            return dtos 
+        }
+
