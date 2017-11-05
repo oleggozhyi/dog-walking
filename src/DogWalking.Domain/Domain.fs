@@ -6,7 +6,6 @@ open DogWalking
 open DogWalking.Boundary
 open DogWalking.Helpers
 open DogWalking.Control
-open DogWalking.Boundary.OutputDto
 
 [<AutoOpen>]
 module PrimitiveWappers =
@@ -52,54 +51,44 @@ module DogsAndCustomers =
     module Dog = 
         let isSmallAggressive dog = dog.IsSmall && dog.IsAggressive
         let isSmall dog = dog.IsSmall && not dog.IsAggressive
-        let isBigAggressive dog = not dog.IsSmall && dog.IsAggressive
-        let isBig dog = not dog.IsSmall && not dog.IsAggressive
-
+        let isLargeAggressive dog = not dog.IsSmall && dog.IsAggressive
+        let isLarge dog = not dog.IsSmall && not dog.IsAggressive
         let create name isSmall isAggressive = 
             { Id = Guid.NewGuid(); Name = name; IsSmall = isSmall; IsAggressive = isAggressive }
-
-        let createFromDto (dogDto: DogDto) = 
+        let createFromDto (dogDto: DogInputDto) = 
             let dogName = dogDto.Name |> Option.ofObj |> Option.traverseResultA  Name.create 
             in create <!> dogName
                    <*> Ok dogDto.IsSmall
                    <*> Ok dogDto.IsAggressive
 
-        let createDto (dog: Dog) = { DogResponse.Id = dog.Id; 
-                                     Name = dog.Name |> Option.toString Name.valueOf;
-                                     IsSmall = dog.IsSmall;
-                                     IsAggressive = dog.IsAggressive }
-
     module Customer = 
-        let getAllDogs customers = customers |> List.map (fun c -> c.Dogs) |> List.concat
+        let getAllDogs customers = customers |> Seq.collect (fun c -> c.Dogs) |> List.ofSeq
 
         let create name phone email dogs =
             { Id = Guid.NewGuid(); Name = name; Phone = phone; Email = email; Dogs = dogs }
 
-        let createFromDto (customerDto: CustomerDto) = 
+        let createFromDto (customerDto: CustomerInputDto) = 
             let email = Option.ofObj customerDto.Email |> Option.traverseResultA Email.create
             create <!> Name.create customerDto.Name
                    <*> Phone.create customerDto.Phone
                    <*> email
                    <*> List.traverseResultA Dog.createFromDto customerDto.Dogs
 
-        let createDto customer = { CustomerResponse.Id = customer.Id;
-                                   Name = customer.Name |> Name.valueOf;
-                                   Email = customer.Email |> Option.toString Email.valueOf
-                                   Phone = customer.Phone |> Phone.valueOf
-                                   Dogs = customer.Dogs |> List.map Dog.createDto }
-
     type DogPack = 
         | AggressiveSmallDog of Dog
-        | AggressiveBigDog of Dog
+        | AggressiveLargeDog of Dog
         | SmallDogsPack of FiveOrLess<Dog>
-        | BigDogsPack of ThreeOrLess<Dog>
+        | LargeDogsPack of ThreeOrLess<Dog>
 
     module DogPack =
         let createPacks dogs = 
              [ yield! dogs |> List.filter Dog.isSmallAggressive  |> List.map AggressiveSmallDog
-               yield! dogs |> List.filter Dog.isBigAggressive |> List.map AggressiveBigDog
+               yield! dogs |> List.filter Dog.isLargeAggressive |> List.map AggressiveLargeDog
                yield! dogs |> List.filter Dog.isSmall |> List.splitBy5 |> List.map SmallDogsPack
-               yield! dogs |> List.filter Dog.isBig |> List.splitBy3 |> List.map BigDogsPack ]
+               yield! dogs |> List.filter Dog.isLarge |> List.splitBy3 |> List.map LargeDogsPack ]
+        let getDogs = function
+            | AggressiveSmallDog dog | AggressiveLargeDog dog -> [dog]
+            | SmallDogsPack (FiveOrLess dogs) | LargeDogsPack  (ThreeOrLess dogs) -> dogs 
 
 [<AutoOpen>]
 module Schedule = 
@@ -107,7 +96,29 @@ module Schedule =
     type WalingSchedule = Schedule of  WalksForDay list
 
     module WalingSchedule =
-        let create = Customer.getAllDogs 
+        let create customers = 
+                    customers
+                     |> (Customer.getAllDogs 
                      >> DogPack.createPacks 
                      >> List.splitItoPairs 
                      >> List.map WalksForDay
+                     >> Schedule)
+[<AutoOpen>]
+module Price = 
+    [<Measure>] type USD
+
+    let calcDoWalkPrice (dog: Dog) = 
+        match dog with 
+        | { IsSmall = true; IsAggressive = false } -> 10m<USD>
+        | { IsSmall = true; IsAggressive = true } -> 55m<USD>
+        | { IsSmall = false; IsAggressive = false } -> 20m<USD>
+        | { IsSmall = false; IsAggressive = true } -> 65m<USD>
+    
+    let calcDogPackWalkPrice dogPack = 
+        dogPack 
+        |> DogPack.getDogs  
+        |> List.sumBy calcDoWalkPrice
+    
+    let calDayProfit walksForDay = 
+        let (WalksForDay (morningWalk, eveningWalk)) = walksForDay
+        (morningWalk |> calcDogPackWalkPrice) + (eveningWalk |> calcDogPackWalkPrice)

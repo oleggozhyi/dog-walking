@@ -60,7 +60,6 @@
     <Compile Include="AppServices.fs" />
     <Compile Include="Api.fs" />
     <Compile Include="Startup.fs" />
-    <None Include="Script.fsx" />
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

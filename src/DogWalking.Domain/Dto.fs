@@ -2,33 +2,15 @@
 
 [<AutoOpen>]
 module InputDto = 
-    type DogDto = { 
+    type DogInputDto = { 
         Name: string;
         IsSmall: bool;
         IsAggressive: bool  
     }
     
-    type CustomerDto = {
+    type CustomerInputDto = {
         Name: string;
         Phone: string;
         Email: string;
-        Dogs: DogDto list
-    }
-
-module OutputDto = 
-    open System
-
-    type DogResponse = { 
-        Id : Guid
-        Name: string;
-        IsSmall: bool;
-        IsAggressive: bool  
-    }
-    
-    type CustomerResponse = {
-        Id : Guid
-        Name: string;
-        Phone: string;
-        Email: string;
-        Dogs: DogResponse list
+        Dogs: DogInputDto list
     }
