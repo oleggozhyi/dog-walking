@@ -13,12 +13,14 @@ open System.Text
 
 module HttpHelpers =
     type ErrorMessage = { Message: string }
+    type ErrorMessages = { Messages: string list }
 
     let private defaultJsonSettings = new  JsonSerializerSettings (ContractResolver = new CamelCasePropertyNamesContractResolver())
 
     let toJson o = JsonConvert.SerializeObject(o, defaultJsonSettings) 
         
     let toJsonMessage s = { Message = s } |> toJson
+    let toJsonMessages xs = { Messages =  xs } |> toJson
     let fromJson<'a> json =
         try
             JsonConvert.DeserializeObject(json, typeof<'a>) :?> 'a |> Ok
@@ -28,8 +30,8 @@ module HttpHelpers =
     let JSON_OK o = toJson o |> OK
        
     let handleFailure = function
-        | Failure e -> e |> INTERNAL_ERROR
-        | Validation es -> es |> toJson |> BAD_REQUEST
+        | Failure e -> e |> toJsonMessage |> INTERNAL_ERROR
+        | Validation es -> es |> toJsonMessages |> BAD_REQUEST
 
     let handleResult = function
         | Ok x -> x |> JSON_OK

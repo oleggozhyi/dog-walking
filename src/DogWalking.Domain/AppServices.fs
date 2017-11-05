@@ -70,6 +70,11 @@ module CustomersService =
         let dtos = customers |> Seq.map createCustomerDto
         return dtos 
     }
+    let getCustomersWithFailure() = result {
+        let! customers = Dal.getCustomersWithFailure() 
+        let dtos = customers |> Seq.map createCustomerDto
+        return dtos 
+    }
 
 module WalkingService = 
     let calcSchedule() =  result {

@@ -14,8 +14,9 @@ module Api =
         choose 
             [ 
              // customers
-              POST   >=> path "/customers" >=> request (readPayload >>=> CustomersService.addCustomer >> handleEmptyResult)
-              GET    >=> path "/customers" >=> warbler (fun _ -> CustomersService.getCustomers() |> handleResult)
+              POST   >=> path "/customers"      >=> request (readPayload >>=> CustomersService.addCustomer >> handleEmptyResult)
+              GET    >=> path "/customers"      >=> warbler (fun _ -> CustomersService.getCustomers() |> handleResult)
+              GET    >=> path "/customers-fail" >=> warbler (fun _ -> CustomersService.getCustomersWithFailure() |> handleResult)
               GET    >=> pathScan "/customers/%s"      (fun id -> CustomersService.getCustomer id |> handleResultWithOption)
               DELETE >=> pathScan "/customers/%s"      (fun id -> CustomersService.removeCustomer id |> handleEmptyResult)
                                                    
