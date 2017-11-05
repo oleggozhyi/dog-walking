@@ -44,14 +44,4 @@ module Id =
         | true, guid -> Ok guid
         | false, _ -> Failure.validation ["Expected Id as Guid but found: " + id]
 
-//module Http = 
-//    open Suave
-//    //ype WebPart<'a> = 'a -> Async<'a option>
-//    let toWebPart (result: Result<'a,ErrorMessageList>) (httpContext: HttpContext) : Async<HttpContext option> = 
-//        { httpContext with result = 
-//            {
-//                status        
-//            }}
-
-
 
